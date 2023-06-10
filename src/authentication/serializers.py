@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from src.friend.models import UserC
+from src.friend.models import User
 
 
 class UserAuthenticationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserC
+        model = User
         fields = ['username', 'password']

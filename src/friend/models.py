@@ -2,16 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
-class UserC(AbstractUser):
-    """ Модель пользователя
-    """
-
+class User(AbstractUser):
+    """ Модель пользователя"""
     my_friend = models.ManyToManyField('self', through='Friend', symmetrical=False, related_name='Друзья')
-
-    # incoming_request = models.ManyToManyField('self', through='FriendRequest', symmetrical=False,
-    #                                           related_name='Входящие' + 'запросы')
-
-    # outgoing_requests
+    friend_requests = models.ManyToManyField('self', through='FriendRequest', symmetrical=False,
+                                             related_name='Заявки')
 
     class Meta:
         verbose_name = 'Профиль'
@@ -22,12 +17,10 @@ class UserC(AbstractUser):
 
 
 class Friend(models.Model):
-    """ Модель списка друзей
-    """
+    """ Модель списка друзей"""
 
-    user = models.ForeignKey(UserC, on_delete=models.CASCADE, related_name='Пользователь')
-    friend = models.ForeignKey(UserC, on_delete=models.CASCADE, related_name='Друг')
-    status = models.CharField(max_length=16)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Пользователь')
+    friend = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Друг')
 
     class Meta:
         verbose_name = 'Друг'
@@ -38,14 +31,14 @@ class Friend(models.Model):
 
 
 class FriendRequest(models.Model):
-    """ Модель заявок в друзья
-    """
-    # STATUSES = (
-    #     ('incoming', 'incoming'),
-    #     ('outgoing', 'outgoing')
-    # )
-    #
-    # from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Кто')
-    # to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Кому')
-    # status = models.CharField(max_length=8, choices=STATUSES)
-    pass
+    """ Модель входящих заявок в друзья"""
+
+    from_whom = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Кого')
+    to_whom = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Получатель')
+
+    class Meta:
+        verbose_name = 'Заявка'
+        verbose_name_plural = 'Заявки'
+
+    def __str__(self):
+        return f'Заявка пользователю {self.to_whom.username} - от {self.from_whom.username}'
