@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
-from .models import User, Friend, FriendRequest
+from . import models
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """ Профиль пользователя """
     class Meta:
-        model = User
+        model = models.User
         fields = '__all__'
 
 
@@ -15,7 +15,7 @@ class ListFriendsSerializer(serializers.ModelSerializer):
     friend = UserProfileSerializer(read_only=True)
 
     class Meta:
-        model = Friend
+        model = models.Friend
         fields = ['friend']
 
 
@@ -24,7 +24,7 @@ class OutgoingFriendRequestSerializer(serializers.ModelSerializer):
     to_user = UserProfileSerializer(read_only=True)
 
     class Meta:
-        model = FriendRequest
+        model = models.FriendRequest
         fields = ['to_whom']
 
 
@@ -33,6 +33,6 @@ class IncomingFriendRequestSerializer(serializers.ModelSerializer):
     to_user = UserProfileSerializer(read_only=True)
 
     class Meta:
-        model = FriendRequest
+        model = models.FriendRequest
         fields = ['from_whom']
 
