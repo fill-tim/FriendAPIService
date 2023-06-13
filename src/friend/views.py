@@ -21,7 +21,7 @@ class OutgoingFriendRequests(generics.ListAPIView):
     serializer_class = serializers.OutgoingFriendRequestSerializer
 
     def get_queryset(self):
-        queryset = models.FriendRequest.objects.filter(to_whom=self.request.user)
+        queryset = models.FriendRequest.objects.filter(from_whom=self.request.user)
         return queryset
 
 
@@ -30,7 +30,7 @@ class IncomingFriendRequests(generics.ListAPIView):
     serializer_class = serializers.IncomingFriendRequestSerializer
 
     def get_queryset(self):
-        queryset = models.FriendRequest.objects.filter(from_whom=self.request.user)
+        queryset = models.FriendRequest.objects.filter(to_whom=self.request.user)
         return queryset
 
 
@@ -108,18 +108,18 @@ class RequestFriends(RequestValidation, GetUserObject):
         return HttpResponse(response)
 
 
-class ResponseToRequest(AddFriends, mixins.DestroyModelMixin):
+class ResponseToRequest(AddFriends, DestroyMix):
     """ Ответ пользователя (принять/отклонить) на входящую заявку в друзья """
 
     def post(self, request):
         data = request.data
         obj = models.FriendRequest.objects.get(id=data['id'])
         if data['state'] == 'accept':
-            response = self.add_friend(first_user=obj.from_whom, second_user=obj.to_whom)
-            self.destroy(obj)
+            response = self.add_friend(from_whom=obj.from_whom, to_whom=obj.to_whom)
+            self.destroy(obj=obj)
             return HttpResponse(response)
         else:
-            self.destroy(obj)
+            self.destroy(obj=obj)
             return HttpResponse('Заявка отклонена!')
 
 
@@ -131,22 +131,24 @@ class GetObjectFriend:
         return obj
 
 
-class DeleteFriend(APIView, GetObjectFriend):
+class DeleteFriend(APIView, GetObjectFriend, DestroyMix):
     """ Удаление пользователя из друзей """
 
-    def post(self, request):
+    def delete(self, request):
         id_num = request.data['id']
         obj_f = models.Friend.objects.get(id=id_num)
         obj_s = self.get_obj_friend(user=obj_f.friend, friend=obj_f.user)
-        return self.delete(obj_f, obj_s)
+        return self.destroy_request(obj_f, obj_s)
 
-    def delete(self, obj_f, obj_s):
-        obj_f.delete()
-        obj_s.delete()
+    def destroy_request(self, obj_f, obj_s):
+        self.destroy(obj=obj_f)
+        self.destroy(obj=obj_s)
         return HttpResponse('Пользователь удален из друзей!')
 
 
 class DetectUsersState(APIView, GetObjectRequest, GetObjectFriend, GetUserObject):
+    """ Определение связи между пользователями """
+
     def post(self, request):
         first_user = request.data.get('first_user')
         obj_first = self.get_obj_user(first_user)

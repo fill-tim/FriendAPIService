@@ -21,7 +21,7 @@ class ListFriendsSerializer(serializers.ModelSerializer):
 
 class OutgoingFriendRequestSerializer(serializers.ModelSerializer):
     """ Исходящие запросы пользователя """
-    to_user = UserProfileSerializer(read_only=True)
+    to_whom = UserProfileSerializer(read_only=True)
 
     class Meta:
         model = models.FriendRequest
@@ -30,7 +30,7 @@ class OutgoingFriendRequestSerializer(serializers.ModelSerializer):
 
 class IncomingFriendRequestSerializer(serializers.ModelSerializer):
     """ Входящие запросы пользователя """
-    to_user = UserProfileSerializer(read_only=True)
+    from_whom = UserProfileSerializer(read_only=True)
 
     class Meta:
         model = models.FriendRequest
