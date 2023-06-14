@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from rest_framework import generics
 from rest_framework import mixins
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import serializers, models
@@ -46,7 +47,7 @@ class AddFriends(APIView):
         models.Friend.objects.create(user=first_user, friend=second_user)
         models.Friend.objects.create(user=second_user, friend=first_user)
 
-        return HttpResponse('Пользователь добавлен в друзья!')
+        return {'message': 'Пользователь добавлен в друзья!', 'status': 201}
 
 
 class GetObjectRequest:
@@ -82,11 +83,11 @@ class RequestValidation(DestroyMix, GetObjectRequest, AddFriends):
                 response = self.add_friend(from_whom=from_whom, to_whom=to_whom)
                 self.destroy(obj=incoming_request)
                 self.destroy(obj=created_already)
-                return HttpResponse(response)
+                return response
             else:
-                return HttpResponse('Заявка отправлена!')
+                return {'message': 'Заявка отправлена!', 'status': 201}
         else:
-            return HttpResponse('Заявка уже была отправлена!')
+            return {'message': 'Заявка уже была отправлена!', 'status': 200}
 
 
 class GetUserObject:
@@ -105,7 +106,7 @@ class RequestFriends(RequestValidation, GetUserObject):
                                                                                         to_whom=to_whom)
         response = self.request_validation(created_incoming=created_incoming, from_whom=from_whom,
                                            to_whom=to_whom, incoming_request=incoming_request)
-        return HttpResponse(response)
+        return Response(response)
 
 
 class ResponseToRequest(AddFriends, DestroyMix):
@@ -117,10 +118,10 @@ class ResponseToRequest(AddFriends, DestroyMix):
         if data['state'] == 'accept':
             response = self.add_friend(from_whom=obj.from_whom, to_whom=obj.to_whom)
             self.destroy(obj=obj)
-            return HttpResponse(response)
+            return Response(response)
         else:
             self.destroy(obj=obj)
-            return HttpResponse('Заявка отклонена!')
+            return Response({'message': 'Заявка отклонена!', 'status': 200})
 
 
 class GetObjectFriend:
@@ -143,7 +144,7 @@ class DeleteFriend(APIView, GetObjectFriend, DestroyMix):
     def destroy_request(self, obj_f, obj_s):
         self.destroy(obj=obj_f)
         self.destroy(obj=obj_s)
-        return HttpResponse('Пользователь удален из друзей!')
+        return Response({'message': 'Пользователь удален из друзей!'})
 
 
 class DetectUsersState(APIView, GetObjectRequest, GetObjectFriend, GetUserObject):
@@ -168,12 +169,14 @@ class DetectUsersState(APIView, GetObjectRequest, GetObjectFriend, GetUserObject
 
     def get_state(self, outgoing_request, incoming_request, friend):
         if outgoing_request.exists():
-            return HttpResponse(
-                f'Исходящая заявка от {outgoing_request.first().from_whom} пользователю {outgoing_request.first().to_whom}')
+            return Response({
+                'message': f'Исходящая заявка от {outgoing_request.first().from_whom} пользователю {outgoing_request.get().to_whom}'
+            })
         elif incoming_request.exists():
-            return HttpResponse(
-                f'Входящая заявка от {incoming_request.first().from_whom} пользователю {incoming_request.first().to_whom}')
+            return Response({
+                'message': f'Входящая заявка от {incoming_request.first().from_whom} пользователю {incoming_request.get().to_whom}'
+            })
         elif friend.exists():
-            return HttpResponse('Уже друзья')
+            return Response({'message': 'Уже друзья'})
         else:
-            return HttpResponse('Ничего нет')
+            return Response({'message': 'Ничего нет'})
